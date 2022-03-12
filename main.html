@@ -1,0 +1,168 @@
+<html>
+<head>
+    <title></title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        var users = {}
+
+        window.onload = (event) => {
+            console.log('page is fully loaded');
+            listUser();
+        };
+
+        function clearProducts() {
+            let table = document.getElementById('products-table');
+            while (table.firstChild) {
+                table.removeChild(table.lastChild);
+            }
+        }
+
+        function productAdded(name, currency) {
+            let table = document.getElementById('products-table');
+            let tr = document.createElement('tr');
+            table.appendChild(tr);
+            for (var val of [name, currency]) {
+                let td = document.createElement('td');
+                td.innerHTML = val;
+                tr.appendChild(td);
+            }
+        }
+
+        function view() {
+            let id = document.getElementById('users-select').value;
+            query("/view", { id : id },
+                function(products) {
+                    products = JSON.parse(products);
+                    console.log(products);
+                    clearProducts();
+                    for (const product of products) {
+                        console.log(product);
+                        productAdded(product.name, product.value);
+                    }
+                });
+        }
+
+        function listUser() {
+            query("/get-users", { },
+                function(users) {
+                    console.log(users);
+                    users = JSON.parse(users);
+                    for (const user of users) {
+                        userAdded(user.id, user.name, user.currency);
+                    }
+                });
+        }
+
+        function userAdded(id, name, currency) {
+            console.log("New user " + id + " " + name + " " + currency);
+            users[id] = { name : name, currency : currency };
+            let select = document.getElementById('users-select');
+            let el = document.createElement('option');
+            el.value = id;
+            el.innerHTML = name + "(" + currency  + ")";
+            select.appendChild(el);
+        }
+
+        function addUser() {
+            let name = document.getElementById("user-name").value;
+            let currency = document.getElementById("user-currency").value;
+            console.log(name);
+            console.log(currency);
+
+            query("/add-user", { name : name, currency : currency },
+                function(id) {
+                    userAdded(id, name, currency);
+                });
+        }
+
+        function addProduct() {
+            let name = document.getElementById("product-name").value;
+            let r = document.getElementById("product-price-r").value;
+            let d = document.getElementById("product-price-d").value;
+            let e = document.getElementById("product-price-e").value;
+            console.log(name);
+            console.log(r + " " + d + " " + e);
+
+            query("/add-product", { name : name, r : r, d : d, e : e },
+                function(id) {
+                    console.log(id);
+                });
+        }
+
+        function query(addr, params, callback) {
+            $.get("http://localhost:8080" + addr, params, callback);
+        }
+    </script>
+</head>
+<body>
+<table>
+    <tr>
+        <td>
+            <label for="user-name">name</label>
+        </td>
+        <td>
+            <input type="text" id="user-name">
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="user-currency">currency</label>
+        </td>
+        <td>
+            <select name="user-currency" id="user-currency">
+                <option value="r">Rouble</option>
+                <option value="d">Dollar</option>
+                <option value="e">Euro</option>
+            </select>
+        </td>
+    </tr>
+</table>
+<button onclick="addUser()" type="button">Add user</button>
+<hr>
+<table>
+    <tr>
+        <td>
+            <label for="product-name">name</label>
+        </td>
+        <td>
+            <input type="text" id="product-name">
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="product-price-r">roubles</label>
+        </td>
+        <td>
+            <input type="text" pattern="\d*" id="product-price-r">
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="product-price-d">dollars</label>
+        </td>
+        <td>
+            <input type="text" pattern="\d*" id="product-price-d">
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <label for="product-price-e">euro</label>
+        </td>
+        <td>
+            <input type="text" pattern="\d*" id="product-price-e">
+        </td>
+    </tr>
+</table>
+<button type="button" onclick="addProduct()">Add product</button>
+<hr>
+
+<select name="money" id="users-select">
+</select>
+
+<button type="button" onclick="view()">view</button>
+
+<table id="products-table">
+</table>
+
+</body>
+</html>
